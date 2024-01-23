@@ -20,7 +20,10 @@ export default function RegisterSuccess() {
       {isShow ? (
         <>
           {" "}
-          <CheckIcon className="text-green-500 text-[9rem]" />
+          <CheckIcon
+            fontSize="large"
+            className="text-green-500 w-[9rem] h-[9rem]"
+          />
           <h1 className="text-2xl text-gray-700 font-bold">
             Registro efetuado com sucesso!
           </h1>
