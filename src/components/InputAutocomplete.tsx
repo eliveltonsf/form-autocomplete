@@ -4,8 +4,7 @@ import React, { useEffect, useState } from "react";
 import { Autocomplete, CircularProgress, TextField } from "@mui/material";
 import { useQuery } from "@tanstack/react-query";
 import { getPersonData } from "@/services/api";
-
-import { usePersonStore } from "@/hooks/usePersonStore";
+import { debounce } from "lodash";
 
 type InputAutocompleteProps = React.HTMLAttributes<HTMLDivElement> & {
   name: string;
@@ -28,35 +27,36 @@ export default function InputAutocomplete({
   handleData,
   ...rest
 }: InputAutocompleteProps) {
-  const [open, setOpen] = useState(false);
-  const [personSelect, setPersonSelect] = useState<PersonProps>();
-  const { person, setPerson } = usePersonStore();
+  const [inputValue, setInputValue] = useState("");
+  const [debouncedInputValue, setDebouncedInputValue] = useState("");
 
   const { data, isLoading } = useQuery<PersonProps[]>({
     initialData: [{ id: 0, name: "" }],
-    queryFn: getPersonData,
+    queryFn: () => getPersonData(debouncedInputValue),
     queryKey: ["personData"],
+    enabled: !!debouncedInputValue,
   });
 
-  const sendData = (data: any) => {
+  const debouncedFetchUsers = debounce((value) => {
+    setDebouncedInputValue(value);
+  }, 600);
+
+  const handleInputChange = (event: any, value: string) => {
+    setInputValue(value);
+    debouncedFetchUsers(value);
+  };
+
+  const sendData = (data: number | null) => {
     handleData({ id: data });
   };
 
   return (
     <Autocomplete
-      id="autocomplete"
-      open={open}
-      onOpen={() => {
-        setOpen(true);
-      }}
-      onClose={() => {
-        setOpen(false);
-      }}
-      isOptionEqualToValue={(option, value) => option.name === value.name}
+      options={inputValue ? data : []}
+      loading={isLoading}
       getOptionLabel={(option) => option.name}
       onChange={(_, value) => sendData(value ? value.id : null)}
-      options={open ? data : []}
-      loading={isLoading}
+      onInputChange={handleInputChange}
       renderInput={(params) => (
         <TextField
           {...rest}
